@@ -9,7 +9,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) < 3 {
-		return
+		panic("Pass flags and file path")
 	}
 	flag := args[1]
 	filepath := args[2]
@@ -18,8 +18,7 @@ func main() {
 		file, err := os.Stat(filepath)
 
 		if err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
 
 		fmt.Println(file.Size(), filepath)
@@ -29,7 +28,7 @@ func main() {
 	if flag == "-l" {
 		file, err := os.Open(filepath)
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 		defer file.Close()
 
@@ -43,6 +42,46 @@ func main() {
 		}
 
 		fmt.Println(lineCount, filepath)
+		return
+	}
+
+	if flag == "-w" {
+		file, err := os.Open(filepath)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		defer file.Close()
+
+		fileScanner := bufio.NewScanner(file)
+		fileScanner.Split(bufio.ScanWords)
+
+		wordCount := 0
+		for fileScanner.Scan() {
+			wordCount++
+		}
+		fmt.Println(wordCount, filepath)
+
+		return
+	}
+
+	if flag == "-m" {
+		file, err := os.Open(filepath)
+		if err != nil {
+			panic(err)
+		}
+
+		defer file.Close()
+
+		fileScanner := bufio.NewScanner(file)
+		fileScanner.Split(bufio.ScanRunes)
+
+		characterCount := 0
+		for fileScanner.Scan() {
+			characterCount++
+		}
+		fmt.Println(characterCount, filepath)
+		return
 	}
 
 	return
