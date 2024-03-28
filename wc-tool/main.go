@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -22,7 +23,27 @@ func main() {
 		}
 
 		fmt.Println(file.Size(), filepath)
-
+		return
 	}
 
+	if flag == "-l" {
+		file, err := os.Open(filepath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer file.Close()
+
+		fileScanner := bufio.NewScanner(file)
+
+		fileScanner.Split(bufio.ScanLines)
+
+		lineCount := 0
+		for fileScanner.Scan() {
+			lineCount++
+		}
+
+		fmt.Println(lineCount, filepath)
+	}
+
+	return
 }
