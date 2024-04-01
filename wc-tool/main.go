@@ -2,19 +2,33 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 )
 
+type Options struct {
+	bytes      bool
+	lines      bool
+	words      bool
+	characters bool
+}
+
 func main() {
-	args := os.Args
 
-	if len(args) < 2 {
-		panic("Pass flags and file path")
-	}
+	var flags Options
 
-	if len(args) == 2 {
-		filepath := args[1]
+	flag.BoolVar(&flags.bytes, "c", false, "count bytes")
+	flag.BoolVar(&flags.lines, "l", false, "count lines")
+	flag.BoolVar(&flags.words, "w", false, "count words")
+	flag.BoolVar(&flags.characters, "m", false, "count runes")
+	flag.Parse()
+
+	fileNames := flag.CommandLine.Args()
+	// TODO: Add support for multiple files
+	filepath := fileNames[0]
+
+	if !flags.bytes || !flags.lines || flags.words || flags.characters {
 
 		lineCount := getLineCount(filepath)
 		wordCount := getWordCount(filepath)
@@ -22,35 +36,29 @@ func main() {
 		fmt.Println(lineCount, wordCount, byteCount, filepath)
 		return
 	}
-	flag := args[1]
-	filepath := args[2]
 
-	if flag == "-c" {
+	// TODO: add formatting for multiple flags
+	if flags.bytes {
 		bytes := getBytesCount(filepath)
 		fmt.Println(bytes, filepath)
-		return
 	}
 
-	if flag == "-l" {
+	if flags.lines {
 		lines := getLineCount(filepath)
 		fmt.Println(lines, filepath)
-		return
 	}
 
-	if flag == "-w" {
+	if flags.words {
 		words := getWordCount(filepath)
 		fmt.Println(words, filepath)
 
-		return
 	}
 
-	if flag == "-m" {
+	if flags.characters {
 		characters := getCharacterCount((filepath))
 		fmt.Println(characters, filepath)
-		return
 	}
 
-	return
 }
 
 func getBytesCount(filepath string) int {
