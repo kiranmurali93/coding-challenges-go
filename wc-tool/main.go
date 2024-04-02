@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -41,40 +42,33 @@ func main() {
 		flags.lines = true
 	}
 
-	parseFilesAndPrintData(fileNames, flags)
+	if len(fileNames) < 1 {
+		reader := bufio.NewReader(os.Stdin)
+		parseFileFromIo(reader, flags)
+		return
+	}
+
+	parseFileIfFilePathExists(fileNames, flags)
 
 }
 
-func parseFilesAndPrintData(fileName []string, flags FlagOptions) {
+func parseFileIfFilePathExists(fileName []string, flags FlagOptions) {
 	var total FileOutput
 	for _, filepath := range fileName {
-		var output FileOutput
-
-		if flags.bytes {
-			bytes := getBytesCount(filepath)
-			output.bytes = bytes
-			total.bytes = total.bytes + bytes
+		file, err := os.Open(filepath)
+		if err != nil {
+			log.Fatal(err)
 		}
+		defer file.Close()
+		reader := bufio.NewReader(file)
 
-		if flags.lines {
-			lines := getLineCount(filepath)
-			output.lines = lines
-			total.lines = total.lines + lines
-		}
+		fileStats := getFileStats(reader)
 
-		if flags.words {
-			words := getWordCount(filepath)
-			output.words = words
-			total.words = total.words + words
-		}
-
-		if flags.characters {
-			characters := getCharacterCount((filepath))
-			output.characters = characters
-			total.characters = total.characters + characters
-		}
-
-		fmt.Println(parseOutput(output, flags), filepath)
+		fmt.Println(parseOutput(fileStats, flags), filepath)
+		total.bytes += fileStats.bytes
+		total.characters += fileStats.characters
+		total.lines += fileStats.lines
+		total.words += fileStats.words
 	}
 	if len(fileName) > 1 {
 		fmt.Println(parseOutput(total, flags), "total")
@@ -82,8 +76,17 @@ func parseFilesAndPrintData(fileName []string, flags FlagOptions) {
 
 }
 
+func parseFileFromIo(reader *bufio.Reader, flags FlagOptions) {
+	fileStats := getFileStats(reader)
+
+	statsOutput := parseOutput(fileStats, flags)
+
+	fmt.Println(statsOutput)
+}
+
 func parseOutput(outputData FileOutput, flags FlagOptions) string {
 	var output string
+
 	if flags.lines {
 		output = output + " " + strconv.Itoa(outputData.lines)
 	}
@@ -104,69 +107,37 @@ func parseOutput(outputData FileOutput, flags FlagOptions) string {
 
 }
 
-func getBytesCount(filepath string) int {
-	file, err := os.Stat(filepath)
+func getFileStats(reader *bufio.Reader) FileOutput {
+	var fileStats FileOutput
+	var prevCharacter rune
 
-	if err != nil {
-		log.Fatal(err)
+	for {
+		character, bytes, err := reader.ReadRune()
+
+		if err != nil {
+			if err == io.EOF {
+				// to handle case where eof appears as soon as the word without space
+				if prevCharacter != rune(0) && prevCharacter != ' ' {
+					fileStats.words++
+				}
+				break
+			}
+			log.Fatal(err)
+		}
+
+		fileStats.bytes += int(bytes)
+		fileStats.characters++
+
+		if prevCharacter != ' ' && character == ' ' {
+			fileStats.words++
+		}
+
+		if character == '\n' {
+			fileStats.lines++
+		}
+
+		prevCharacter = character
 	}
 
-	return int(file.Size())
-}
-
-func getLineCount(filepath string) int {
-	file, err := os.Open(filepath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	fileScanner := bufio.NewScanner(file)
-
-	fileScanner.Split(bufio.ScanLines)
-
-	lineCount := 0
-	for fileScanner.Scan() {
-		lineCount++
-	}
-
-	return lineCount
-}
-
-func getWordCount(filepath string) int {
-	file, err := os.Open(filepath)
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Split(bufio.ScanWords)
-
-	wordCount := 0
-	for fileScanner.Scan() {
-		wordCount++
-	}
-
-	return wordCount
-}
-
-func getCharacterCount(filepath string) int {
-	file, err := os.Open(filepath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer file.Close()
-
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Split(bufio.ScanRunes)
-
-	characterCount := 0
-	for fileScanner.Scan() {
-		characterCount++
-	}
-
-	return characterCount
+	return fileStats
 }
