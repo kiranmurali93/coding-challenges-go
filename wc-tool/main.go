@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"unicode"
 )
 
 type FlagOptions struct {
@@ -128,7 +129,7 @@ func getFileStats(reader *bufio.Reader) FileOutput {
 		fileStats.bytes += int(bytes)
 		fileStats.characters++
 
-		if prevCharacter != ' ' && character == ' ' {
+		if !unicode.IsSpace(prevCharacter) && unicode.IsSpace(character) {
 			fileStats.words++
 		}
 
