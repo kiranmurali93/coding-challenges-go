@@ -118,7 +118,7 @@ func getFileStats(reader *bufio.Reader) FileOutput {
 		if err != nil {
 			if err == io.EOF {
 				// to handle case where eof appears as soon as the word without space
-				if prevCharacter != rune(0) && prevCharacter != ' ' {
+				if prevCharacter != rune(0) && !unicode.IsSpace(prevCharacter) {
 					fileStats.words++
 				}
 				break

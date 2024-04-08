@@ -7,4 +7,4 @@ Solutions of coding Challenges posted on [codingchallenges.fyi](https://codingch
 
 | Challenge | Status |
 | :---:   | :---: |
-| [Build Your Own wc Tool](https://codingchallenges.fyi/challenges/challenge-wc/) | Ongoing |
+| [Build Your Own wc Tool](https://codingchallenges.fyi/challenges/challenge-wc/) | [Done](https://github.com/kiranmurali93/coding-challenges-go/tree/main/wc-tool) |
